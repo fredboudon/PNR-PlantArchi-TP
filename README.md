@@ -10,7 +10,7 @@ In a convenient directory, you will now download the training material by clicki
 Alternativelly, you can use the following commands in a shell:
 
     cd /path/to/your/documents
-    git clone https://github.com/fredboudon/lpy-training.git
+    git clone https://github.com/fredboudon/PNR-PlantArchi-TP.git
 
 
 ## Installation of Software using Conda
@@ -25,7 +25,7 @@ If you have not yet installed conda on your computer, follow these instructions:
 
 Then, after install of conda, run the following command in an Anaconda Shell to create the sofware environment and its notebooks extension.
 
-    cd /path/to/your/documents/
+    cd /path/to/your/documents/PNR-PlantArchi-TP/
     conda env create -f environment.yml
 
 Activate the environment using
