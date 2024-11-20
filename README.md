@@ -19,9 +19,9 @@ Alternativelly, you can use the following commands in a shell:
 This installation is based on [Conda](https://conda.io). Conda is a package manager that can be installed on Linux, Windows, and Mac.
 If you have not yet installed conda on your computer, follow these instructions:
 
-[Conda Installation](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html). Follow instructions for Miniconda.
+[Conda Installation](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html). Follow instructions for Miniforge.
 
-[Conda Download](https://conda.io/miniconda.html). Use the Python 3.10 based installation.
+[Conda Download](https://conda-forge.org/download). Use the Python 3.10 based installation.
 
 Then, after install of conda, run the following command in an Anaconda Shell to create the sofware environment and its notebooks extension.
 
