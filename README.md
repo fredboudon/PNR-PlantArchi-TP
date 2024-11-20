@@ -1,4 +1,4 @@
-# PNR Technical School: training session on Plant Modelling under Agrivoltaics
+# PNR Technical School: training session on Modelling Plants under Agrivoltaics
 
 
 ## Installation of the training material
