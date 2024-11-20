@@ -21,14 +21,14 @@ If you have not yet installed conda on your computer, follow these instructions:
 
 [Conda Installation](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html). Follow instructions for Miniforge.
 
-[Conda Download](https://conda-forge.org/download). Use the Python 3.10 based installation.
+[Conda Download](https://conda-forge.org/download). Use the proper installation for your OS.
 
-Then, after install of conda, run the following command in an Anaconda Shell to create the sofware environment and its notebooks extension.
+Then, after the install of conda, run the following command in an Anaconda Shell to create the sofware environment :
 
     cd /path/to/your/documents/PNR-PlantArchi-TP/
-    conda env create -f environment.yml
+    mamba env create -f environment.yml
 
-Activate the environment using
+Activate the environment, named pnr, using
 
     conda activate pnr
 
