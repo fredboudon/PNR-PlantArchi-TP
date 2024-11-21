@@ -9,10 +9,10 @@ from openalea.lpy import Lsystem
 
 import sys, os
 from os.path import join, exists
-canpaths = [join(sys.prefix,'bin'),join(sys.prefix,'Scripts')]
+canpaths = [join(sys.prefix,'bin'),join(sys.prefix,'Scripts'),join(sys.prefix,'Library','mingw-w64','bin'),join(sys.prefix,'Library','bin')]
 for canpath in canpaths:
     if exists(canpath) and canpath not in os.environ['PATH']: 
-        os.environ['PATH']+=':'+canpath
+        os.environ['PATH']+=os.pathsep+canpath
 
 
 def reformat_scene(geometry):
