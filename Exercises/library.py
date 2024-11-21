@@ -7,6 +7,14 @@ import matplotlib.pyplot as plt
 from openalea.lpy import Lsystem
 
 
+import sys, os
+from os.path import join, exists
+canpaths = [join(sys.prefix,'bin'),join(sys.prefix,'Scripts')]
+for canpath in canpaths:
+    if exists(canpath) and canpath not in os.environ['PATH']: 
+        os.environ['PATH']+=':'+canpath
+
+
 def reformat_scene(geometry):
     nbpolygons = len(geometry.indexList)
     sc = Scene()
@@ -28,8 +36,12 @@ def Light_model(lsys, hour=12):
     sun = tuple((float(getsun[0]), tuple((float(getsun[1]), float(getsun[2]), float(getsun[3])))))
     sun_position = sun
     # print (sun_position)
-    sun_shp = Shape(Translated(sun_position[1][0] * -50, sun_position[1][1] * -50, sun_position[1][2] * -50, Sphere(0.5)), Material(Color3(60, 60, 15)), id=0)
-    scene.add(sun_shp)
+    sunid = 1000000
+    sun_shp = Shape(Translated(sun_position[1][0] * -50, sun_position[1][1] * -50, sun_position[1][2] * -50, Sphere(0.5)), Material(Color3(60, 60, 15)), id=sunid)
+    if scene[-1].id != sunid:
+        scene.add(sun_shp)
+    else:
+        scene[-1] = sun_shp
 
     c_scene = CaribuScene(scene=scene, light=[sun])
     # SceneWidget(scene)
@@ -48,7 +60,7 @@ def Light_model(lsys, hour=12):
     for vid, Eabs in aggregated['default_band']['Eabs'].items():
         if vid == 0 or vid >= len(lstring):
             continue
-        elif lstring[vid].name == 'F':
+        elif lstring[vid].name in 'FT':
             graph['Feuilles'] += Eabs / sum(aggregated['default_band']['Eabs'].values())
         else:
             graph['Tige'] += Eabs / sum(aggregated['default_band']['Eabs'].values())
@@ -58,6 +70,7 @@ def Light_model(lsys, hour=12):
     LIE = sum(aggregated['default_band']['Eabs'][k]*aggregated['default_band']['area'][k]*1E-4 for k in aggregated['default_band']['Eabs']) / (sum(aggregated['default_band']['area'].values())*1E-4)
     print("Efficience interception lumière = {}".format(LIE))
 
+    print(graph)
     xindex = [1, 2]
     LABELS = graph.keys()
     ax.bar(xindex, graph.values(), align='center')

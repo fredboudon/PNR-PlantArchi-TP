@@ -114,8 +114,8 @@ Axiom:
   initialmtg.properties()['radius'] = radius  
   nsproduce(lstring)
 
+derivation length: 2
 production:
-
 interpretation:
 
 InitId:  
