@@ -1,0 +1,4 @@
+name: pnr
+version: "0.1.0"
+environment_file: "environment.yml"
+installer_type: pkg  #[osx]
