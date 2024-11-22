@@ -13,6 +13,7 @@ dependencies:
   - jupyterlab_widgets
   - notebook
   - ipywidgets
+  - ipympl
   - ipython
   - pgljupyter=2.0.0
   - matplotlib
