@@ -133,11 +133,20 @@ def Run_Asso(distance=0, scaling_Lmax=1, inclination_factor=1):
     # Visualisation of the association
     scene_out = Scene()
 
-    for shp in scene_asso:
-        if shp.id <= 1000:  # Fetuque
-            scene_out += Shape(Translated(distance/2, 0, 0, shp.geometry), shp.appearance, id=shp.id)
-        else:  # Luzerne
-            scene_out += Shape(Translated(-distance/2, 0, 0, shp.geometry), shp.appearance, id=shp.id)
+    #for shp in scene_asso:
+    #    if shp.id <= 1000:  # Fetuque
+    #        scene_out += Shape(Translated(distance/2, 0, 0, shp.geometry), shp.appearance, id=shp.id)
+    #    else:  # Luzerne
+    #        scene_out += Shape(Translated(-distance/2, 0, 0, shp.geometry), shp.appearance, id=shp.id)
 
+    d_plante = 10.
+    initID_luz = 1000
+    nb_plantes = round(distance/d_plante)+1
+    for num_plante in range(nb_plantes):
+        for shp in s_luz:
+            scene_out += Shape(Translated(-distance/2+num_plante*d_plante, 0, 0, shp.geometry), shp.appearance, id=num_plante*initID_luz)
+    for shp in s_fet:
+        scene_out += Shape(Translated(-distance/2, 0, 0, shp.geometry), shp.appearance, id=shp.id)
+        scene_out += Shape(Translated(+distance/2, 0, 0, shp.geometry), shp.appearance, id=shp.id)
     colored_scene = Calcul_Caribu(scene_out)
     return SceneWidget(colored_scene, size_world=75)
