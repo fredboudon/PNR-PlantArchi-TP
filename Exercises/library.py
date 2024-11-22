@@ -142,11 +142,28 @@ def Run_Asso(distance=0, scaling_Lmax=1, inclination_factor=1):
     d_plante = 10.
     initID_luz = 1000
     nb_plantes = round(distance/d_plante)+1
+    #informations panneaux
+    panelsize = 20
+    angle_panel = 0
+    height_panel = 0
+    
+    #panel = QuadSet([(panelsize/2, -panelsize/2,0),
+    #                 (panelsize/2+panelsize, -panelsize/2,0),
+    #                 (panelsize/2+panelsize, panelsize/2,0),
+    #                 (panelsize/2, panelsize/2,0)],[list(range(4))])
+    panel = QuadSet([(-panelsize/2, -panelsize/2,0),
+                     (panelsize/2, -panelsize/2,0),
+                     (panelsize/2, panelsize/2,0),
+                     (-panelsize/2, panelsize/2,0)],[list(range(4))])
+                     
     for num_plante in range(nb_plantes):
         for shp in s_luz:
             scene_out += Shape(Translated(-distance/2+num_plante*d_plante, 0, 0, shp.geometry), shp.appearance, id=num_plante*initID_luz)
-    for shp in s_fet:
-        scene_out += Shape(Translated(-distance/2, 0, 0, shp.geometry), shp.appearance, id=shp.id)
-        scene_out += Shape(Translated(+distance/2, 0, 0, shp.geometry), shp.appearance, id=shp.id)
+
+    scene_out += Shape(Translated(-distance/2, 0, height_panel, AxisRotated((0,0,1), angle_panel*3.14/180,panel)))
+    scene_out += Shape(Translated(+distance/2, 0, height_panel, AxisRotated((0,0,1), angle_panel*3.14/180,panel)))
+    #for shp in s_fet:
+    #    scene_out += Shape(Translated(-distance/2, 0, 0, shp.geometry), shp.appearance, id=shp.id)
+    #    scene_out += Shape(Translated(+distance/2, 0, 0, shp.geometry), shp.appearance, id=shp.id)
     colored_scene = Calcul_Caribu(scene_out)
     return SceneWidget(colored_scene, size_world=75)
