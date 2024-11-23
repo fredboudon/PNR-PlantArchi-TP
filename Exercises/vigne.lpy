@@ -1,0 +1,184 @@
+from random import uniform, seed
+from numpy.random import *
+from math import ceil
+
+%pastefile lighting.lpy
+
+extern(lsouche = 100)
+ramif_left_ratio = 0.96
+extern(wsouche = 4)
+dl = 2
+
+extern(lhsouche = 70)
+extern(nbrameaux = 5)
+extern(wrameaux = 1)
+
+def read_parameters(genotype = 'gen1', filename = 'parameters.csv', sep=';'):
+  import pandas as pd
+  df = pd.read_csv(filename, sep=sep)
+  df.set_index('genotype', drop=True,inplace=True)
+  for pname, pvalue in df[:genotype].iloc[0].items():
+  #  print(pname,'=',pvalue)
+    globals()[pname] = pvalue
+
+read_parameters()
+
+leafsmb_surf = 34.628228542696554
+
+
+seed(1)
+
+if AGRIVOLTAISM:
+    extern(panel_height = 300)
+    extern(panel_angle = 20)
+    extern(panel_width = 100)
+    extern(panel_length = 100)
+
+def neg_binom(mu, theta):
+  proba = theta/(theta + mu)
+  return int(negative_binomial(theta, proba, 1))
+
+def profile(u, prof_intercept_0, prof_intercept_1, prof_u_max):
+  if u < prof_u_max:
+    return u*(1 - prof_intercept_0)/prof_u_max + prof_intercept_0
+  else:
+    return (u-prof_u_max) * (prof_intercept_1-1)/(1-prof_u_max) + 1
+
+def NF1(): # nb de feuilles d'un rameaux
+  return int(normal(nf1_mean,nf1_sd))
+
+def SFmax():
+  return normal(max_mean_sf,max_sd_sf)
+
+def INmax():
+  return normal(max_mean_in,max_sd_in)
+
+def branching():
+  return neg_binom(br_mu,br_theta)
+
+
+def EndEach(lstring, lscene):
+  if lscene:
+    return computeLight(lstring, lscene, sunratio = 1, minmax = ['Leaf'])
+    for mod in lstring:
+      if mod.name == '?Light':
+        assert mod[0] >= 0
+
+def End(lstring, lscene):
+    for mod in lstring:
+      if mod.name == '?Light':
+        assert mod[0] >= 0
+    export_light_info(lstring, lscene)
+
+
+module Panel
+module Plant
+module Leaf
+module A,B,C,D
+
+Axiom: 
+  if MANAGEMENT:
+    rowsize = 50
+    plantdist = 150
+    for i in range(3):
+      for j in range(3):
+        nproduce [  Plant(i*3+j) @M(-rowsize+rowsize*i,-plantdist+plantdist*j,0) _(wsouche) @Gc SetGuide(souche,lsouche, True) A(0)]
+        if AGRIVOLTAISM:
+            nproduce [ @M(-rowsize+rowsize*i,-plantdist+plantdist*j,panel_height) ?Light(0) Panel(panel_angle, panel_width, panel_length)]
+  else:
+    nproduce [ _(wsouche) @Gc SetGuide(souche,lsouche, True) A(0)]
+    if AGRIVOLTAISM:
+      nproduce [ @M(0,0,panel_height) ?Light(0) Panel(panel_angle, panel_width, panel_length)]
+
+derivation length: 40
+production:
+
+A(l): # souche principale
+    nproduce nF(lsouche*ramif_left_ratio,dl)
+    nproduce [ EndGuide() +(130) /(90) B(lhsouche) ]
+    nproduce nF(lsouche*(1-ramif_left_ratio),dl)
+    produce /(-90) B(lhsouche)
+
+B(l): # souches horizontales
+  distrameaux = lhsouche / (nbrameaux)
+  for i in range(int(ceil(l/distrameaux))):
+    nproduce F(distrameaux/2 if i == 0 else distrameaux)
+    nproduce [@Ge  ,(2) Elasticity(0.1) ^(90) /(uniform(0,360)) +(uniform(-60,60)) _(wrameaux) f(wsouche*0.8) @Gc ?P C(0, NF1(), SFmax(), INmax()) ]
+  nproduce F(distrameaux/2) @O
+
+?P(p) C(rank, nf, sfmax, inmax): # rameaux
+  if PRUNING and (p.z > 200 or abs(p.x) > 40):
+    produce %
+  if rank < nf:
+    inlength = inmax*profile(rank/nf, prof_intercept_in_0, prof_intercept_in_1, prof_u_max_in)
+    nproduce F(inlength) 
+    nproduce [/(90+180*rank+uniform(-10,10)) 
+    leafsize = sfmax*profile(rank/nf, prof_intercept_sf_0, prof_intercept_sf_1, prof_u_max_sf)
+    nbsecleaves = branching()
+    #print(nbsecleaves)
+    if nbsecleaves > 0 :
+      nproduce [ &(60) ?P D(0, nbsecleaves, 2*leafsize/3, 2*inlength/3 ) ]
+      pass
+    nproduce &(135) ?P ?Light(0) Leaf(leafsize)
+    nproduce ]
+    produce ?P C(rank+1, nf, sfmax, inmax)
+
+
+?P(p) D(rank, nf, lsize, inlength):
+  if PRUNING and (p.z > 200  or abs(p.x) > 40):
+    produce %
+  if rank < nf:
+    nproduce /(180*rank+uniform(-10,10)) F(inlength) 
+    nproduce [/(90)  &(135) ?P ?Light(0) Leaf(lsize)]
+    produce ?P D(rank+1, nf, lsize, inlength)
+
+?P(p) ?Light(l) Leaf(s):
+	if PRUNING and  120 < p.z < 150:
+	  produce %
+	else:
+	  produce ?Light(l) Leaf(s)
+
+interpretation:
+
+?Light(lg) Leaf(size) :
+  #print(lg, minl, maxl)
+  s = sqrt(size/leafsmb_surf)
+  if size > 0:
+    nproduce [ ,(2)
+    #lightintensity(lg, 2)
+    produce @Ge Elasticity(0) _(0.005) F(s) { .+(160) f(s). -(90) f(1.6*s). -(120) f(0.75*s). +(90) f(s). -(50) f(0.75*s). -(120) f(1.2*s). +(160) f(s). -(90) f(1.6*s). -(60) f(1.6*s). -(90) f(s) . +(160) f(1.2*s) . -(120) f(0.75*s) . -(50) f(s). +(90) f(0.75*s). -(120) f(1.6*s). -(90) f(s).}(True) ]
+
+?Light(lg) Panel(angle, width, length) :
+  lightintensity(lg, 0)
+  nproduce _(length/2) [&(90-angle)   Quad(width/2)] [/(180)&(90+angle)  Quad(width/2)]
+
+endlsystem
+
+def lightintensity(light, defaultcolor):
+  minl,maxl = getMinMaxLighting()
+  if maxl - minl > 1e-3:
+      nproduce InterpolateColors(5,3, (light-minl)/(maxl-minl)) 
+  else:
+      nproduce ,(defaultcolor)  
+  
+###### INITIALISATION ######
+
+__lpy_code_version__ = 1.1
+
+def __initialiseContext__(context):
+	scalars = [('PRUNING', 'Bool', False), ('MANAGEMENT', 'Bool', False), ('AGRIVOLTAISM', 'Bool', False)]
+	context["__scalars__"] = scalars
+	for s in scalars:
+		if not s[1] == "Category" : context[s[0]] = s[2]
+	import openalea.plantgl.all as pgl
+	souche = pgl.NurbsCurve2D(	
+	    ctrlPointList = pgl.Point3Array([(0.00465839, -0.00310559, 1),(-0.0881766, 0.222898, 1),(0.0691672, 0.359669, 1),(0.0132334, 0.531403, 1),(-0.0889292, 0.640291, 1),(0.0968341, 0.77072, 1),(-0.0415003, 1.00391, 2.12),(0.097053, 1.00566, 1)]) , 
+	    stride = 48 , 
+	    )
+	souche.name = "souche"
+	panel_0 = ({'name': 'Panel 1', 'active': True, 'visible': True},[('Curve2D',souche)])
+	parameterset = [panel_0,]
+	context["__functions__"] = []
+	context["__curves__"] = [('souche',souche),]
+	context["__parameterset__"] = parameterset
+	context["souche"] = souche
