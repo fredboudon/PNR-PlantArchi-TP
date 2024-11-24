@@ -6,6 +6,7 @@ from numpy import arange, random
 import matplotlib.pyplot as plt
 from openalea.lpy import Lsystem
 from ipywidgets import interact, interactive, fixed, interact_manual, widgets
+from math import ceil, floor
 
 import sys, os
 from os.path import join, exists
@@ -81,7 +82,7 @@ def Light_model(lsys, hour=12):
 
 
 def Run_AgriPV_diffus(agripv = True, distance=30, distance_plante = 10, panelsize = 10, angle_panel = 40, height_panel = 0, flag_couvert = 'Luzerne', infini = True):
-    def Calcul_Caribu(scene, dico_IDs):
+    def Calcul_Caribu_diffus(scene, pattern_caribu, infini, dico_IDs):
         # ciel
         sky_string = GetLight.GetLight(GenSky.GenSky()(1, 'soc', 4, 5))  # (Energy, soc/uoc, azimuts, zenits)
 
@@ -92,7 +93,7 @@ def Run_AgriPV_diffus(agripv = True, distance=30, distance_plante = 10, panelsiz
                 t = tuple((float(string_split[0]), tuple((float(string_split[1]), float(string_split[2]), float(string_split[3])))))
                 sky.append(t)
 
-        c_scene = CaribuScene(scene=scene, light=sky, pattern=(BoundingBox(scene).getXMin(), BoundingBox(scene).getYMin(), BoundingBox(scene).getXMax(), BoundingBox(scene).getYMax()))
+        c_scene = CaribuScene(scene=scene, light=sky, pattern=pattern_caribu)
         raw, aggregated = c_scene.run(direct=True, infinite=infini)
 
         # Visualisation
@@ -143,7 +144,7 @@ def Run_AgriPV_diffus(agripv = True, distance=30, distance_plante = 10, panelsiz
 
     scene_asso = s_luz + s_fet
     # Visualisation of the association
-    scene_out = Scene()
+    scene_out, scene_out_caribu = Scene(),Scene()
 
     #for shp in scene_asso:
     #    if shp.id <= 1000:  # Fetuque
@@ -155,6 +156,7 @@ def Run_AgriPV_diffus(agripv = True, distance=30, distance_plante = 10, panelsiz
     initID = 1000
     distance = distance*100 #conversion en cm
     nb_plantes = round(2.*distance/distance_plante)+1
+    nb_plantes_caribu = round(distance/distance_plante)+1
     #informations panneaux
     #panelsize = 10
     #angle_panel = 0
@@ -178,58 +180,81 @@ def Run_AgriPV_diffus(agripv = True, distance=30, distance_plante = 10, panelsiz
     dico_Ids = {}
     dico_pltes_Ids = {}
     no_plte_res = 1
-    for num_plante in range(0,nb_plantes):
+    for num_plante in range(0,nb_plantes_caribu):
         if (flag_couvert=='Luzerne'):
-            if ((-distance+num_plante*distance_plante>=-distance/2) and (-distance+num_plante*distance_plante<=distance/2)):
-                dico_Ids[num_plante*initID]=no_plte_res
+            #if ((-distance/2+num_plante*distance_plante>=-distance/2) and (-distance/2+num_plante*distance_plante<=distance/2)):
+            dico_Ids[num_plante*initID]=num_plante+1
             azimut_plante = random.random()*3.14
             for shp in s_luz:
-                if (distance/distance_plante%2==0):
-                    scene_out += Shape(Translated(0, -distance+num_plante*distance_plante, 0, AxisRotated((0,0,1), azimut_plante, shp.geometry)), shp.appearance, id=num_plante*initID)
-                else:
-                    scene_out += Shape(Translated(0, -distance+(num_plante+1/2)*distance_plante, 0, AxisRotated((0,0,1), azimut_plante, shp.geometry)), shp.appearance, id=num_plante*initID)
+                if ((-distance/2+num_plante*distance_plante>=-distance/2) and (-distance/2+num_plante*distance_plante<=0)):
+                    scene_out_caribu += Shape(Translated(0, -num_plante*distance_plante, 0, AxisRotated((0,0,1), azimut_plante, shp.geometry)), shp.appearance, id=num_plante*initID)
+                elif ((-distance/2+num_plante*distance_plante>0) and (-distance/2+num_plante*distance_plante<=+distance/2)):
+                    scene_out_caribu += Shape(Translated(0, (nb_plantes_caribu-num_plante)*distance_plante, 0, AxisRotated((0,0,1), azimut_plante, shp.geometry)), shp.appearance, id=num_plante*initID)
+                    
+                #if (distance/distance_plante%2==0):
+                #    scene_out += Shape(Translated(0, -distance+num_plante*distance_plante, 0, AxisRotated((0,0,1), azimut_plante, shp.geometry)), shp.appearance, id=num_plante*initID)
+                #else:
+                #    scene_out += Shape(Translated(0, -distance+(num_plante+1/2)*distance_plante, 0, AxisRotated((0,0,1), azimut_plante, shp.geometry)), shp.appearance, id=num_plante*initID)
 
         elif (flag_couvert=='Fétuque'):
-            if ((-distance+num_plante*distance_plante>=-distance/2) and (-distance+num_plante*distance_plante<=distance/2)):
-                dico_Ids[num_plante*initID]=no_plte_res
+            #if ((-distance/2+num_plante*distance_plante>=-distance/2) and (-distance+num_plante*distance_plante<=distance/2)):
+            dico_Ids[num_plante*initID]=num_plante+1
             azimut_plante = random.random()*3.14
             for shp in s_fet:
-                if (distance/distance_plante%2==0):
-                    scene_out += Shape(Translated(0, -distance+num_plante*distance_plante, 0, AxisRotated((0,0,1), azimut_plante, shp.geometry)), shp.appearance, id=num_plante*initID)
-                else:
-                    scene_out += Shape(Translated(0, -distance+(num_plante+1/2)*distance_plante, 0, AxisRotated((0,0,1), azimut_plante,shp.geometry)), shp.appearance, id=num_plante*initID)
+                if ((-distance/2+num_plante*distance_plante>=-distance/2) and (-distance/2+num_plante*distance_plante<=0)):
+                    scene_out_caribu += Shape(Translated(0, -num_plante*distance_plante, 0, AxisRotated((0,0,1), azimut_plante, shp.geometry)), shp.appearance, id=num_plante*initID)
+                elif ((-distance/2+num_plante*distance_plante>0) and (-distance/2+num_plante*distance_plante<=+distance/2)):
+                    scene_out_caribu += Shape(Translated(0, (nb_plantes_caribu-num_plante)*distance_plante, 0, AxisRotated((0,0,1), azimut_plante, shp.geometry)), shp.appearance, id=num_plante*initID)
+                    
+                #if (distance/distance_plante%2==0):
+                #    scene_out += Shape(Translated(0, -distance+num_plante*distance_plante, 0, AxisRotated((0,0,1), azimut_plante, shp.geometry)), shp.appearance, id=num_plante*initID)
+                #else:
+                #    scene_out += Shape(Translated(0, -distance+(num_plante+1/2)*distance_plante, 0, AxisRotated((0,0,1), azimut_plante,shp.geometry)), shp.appearance, id=num_plante*initID)
     
         elif (flag_couvert=='Vigne'):
-            if ((-distance+num_plante*distance_plante>=-distance/2) and (-distance+num_plante*distance_plante<=distance/2)):
-                dico_Ids[num_plante*initID]=no_plte_res
+            #if ((-distance+num_plante*distance_plante>=-distance/2) and (-distance+num_plante*distance_plante<=distance/2)):
+            dico_Ids[num_plante*initID]=num_plante+1
             for shp in s_vig:
-                if (distance/distance_plante%2==0):
-                    scene_out += Shape(Translated(0, -distance+num_plante*distance_plante, 0, shp.geometry), shp.appearance, id=num_plante*initID)
-                else:
-                    scene_out += Shape(Translated(0, -distance+(num_plante+1/2)*distance_plante, 0, shp.geometry), shp.appearance, id=num_plante*initID)
+                if ((-distance/2+num_plante*distance_plante>=-distance/2) and (-distance/2+num_plante*distance_plante<=0)):
+                    scene_out_caribu += Shape(Translated(0, -num_plante*distance_plante, 0, AxisRotated((0,0,1), azimut_plante, shp.geometry)), shp.appearance, id=num_plante*initID)
+                elif ((-distance/2+num_plante*distance_plante>0) and (-distance/2+num_plante*distance_plante<=+distance/2)):
+                    scene_out_caribu += Shape(Translated(0, (nb_plantes_caribu-num_plante)*distance_plante, 0, AxisRotated((0,0,1), azimut_plante, shp.geometry)), shp.appearance, id=num_plante*initID)
+                    
+                #if (distance/distance_plante%2==0):
+                #    scene_out += Shape(Translated(0, -distance+num_plante*distance_plante, 0, shp.geometry), shp.appearance, id=num_plante*initID)
+                #else:
+                #    scene_out += Shape(Translated(0, -distance+(num_plante+1/2)*distance_plante, 0, shp.geometry), shp.appearance, id=num_plante*initID)
     
         
         else:
-            if ((-distance+num_plante*distance_plante>=-distance/2) and (-distance+num_plante*distance_plante<=distance/2)):
-                dico_Ids[num_plante*initID]=no_plte_res
-            scene_out += Shape(Translated(0, -distance+num_plante*distance_plante, 0, sensor), id=num_plante*initID)
+            #if ((-distance+num_plante*distance_plante>=-distance/2) and (-distance+num_plante*distance_plante<=distance/2)):
+            dico_Ids[num_plante*initID]=num_plante+1
+            if ((-distance/2+num_plante*distance_plante>=-distance/2) and (-distance/2+num_plante*distance_plante<=0)):
+                scene_out_caribu += Shape(Translated(0, -num_plante*distance_plante, 0, AxisRotated((0,0,1), 0, sensor)), shp.appearance, id=num_plante*initID)
+            elif ((-distance/2+num_plante*distance_plante>0) and (-distance/2+num_plante*distance_plante<=+distance/2)):
+                scene_out_caribu += Shape(Translated(0, (nb_plantes_caribu-num_plante)*distance_plante, 0, AxisRotated((0,0,1), 0, sensor)), shp.appearance, id=num_plante*initID)
+                
+            #scene_out += Shape(Translated(0, -distance+num_plante*distance_plante, 0, sensor), id=num_plante*initID)
         dico_pltes_Ids[flag_couvert] = dico_Ids
         no_plte_res += 1
     ###########RAJOUT des panneaux################
     #print(len(scene_out))
     if (agripv == True):
-        if (distance/distance_plante%2==0):
-            scene_out += Shape(Translated(0, -distance/2, height_panel, AxisRotated((1,0,0), angle_panel*3.14/180,panel)))
-            scene_out += Shape(Translated(0, +distance/2, height_panel, AxisRotated((1,0,0), angle_panel*3.14/180,panel)))
-        else:
-            scene_out += Shape(Translated(0, (-distance+distance_plante)/2, height_panel, AxisRotated((1,0,0), angle_panel*3.14/180,panel)))
-            scene_out += Shape(Translated(0, (+distance/2+distance_plante)/2, height_panel, AxisRotated((1,0,0), angle_panel*3.14/180,panel)))
+        scene_out_caribu += Shape(Translated(0, 0, height_panel, AxisRotated((1,0,0), angle_panel*3.14/180,panel)))
+        scene_out_caribu += Shape(Translated(0, distance/2, height_panel, AxisRotated((1,0,0), angle_panel*3.14/180,panel)))
+        #if (distance/distance_plante%2==0):
+        #    scene_out += Shape(Translated(0, -distance/2, height_panel, AxisRotated((1,0,0), angle_panel*3.14/180,panel)))
+        #    scene_out += Shape(Translated(0, +distance/2, height_panel, AxisRotated((1,0,0), angle_panel*3.14/180,panel)))
+        #else:
+        #    scene_out += Shape(Translated(0, (-distance+distance_plante)/2, height_panel, AxisRotated((1,0,0), angle_panel*3.14/180,panel)))
+        #    scene_out += Shape(Translated(0, (+distance/2+distance_plante)/2, height_panel, AxisRotated((1,0,0), angle_panel*3.14/180,panel)))
                 
             #for shp in s_fet:
             #    scene_out += Shape(Translated(-distance/2, 0, 0, shp.geometry), shp.appearance, id=shp.id)
             #    scene_out += Shape(Translated(+distance/2, 0, 0, shp.geometry), shp.appearance, id=shp.id)
-    colored_scene = Calcul_Caribu(scene_out, dico_pltes_Ids)
-    print(len(dico_pltes_Ids[flag_couvert]))
+    pattern_caribu = (-(distance-(nb_plantes_caribu-1)*distance_plante)/2,-distance_plante/2,(distance-(nb_plantes_caribu-1)*distance_plante)/2,distance_plante/2)
+    colored_scene = Calcul_Caribu_diffus(scene_out_caribu, pattern_caribu, infini, dico_pltes_Ids)
+    print(len(dico_pltes_Ids[flag_couvert]),pattern_caribu)
     return SceneWidget(colored_scene, size_world=75)
 
 def cellule_analyse_AgriPV_diffus():
@@ -242,7 +267,7 @@ def cellule_analyse_AgriPV_diffus():
                  indent=False
     ),             
              distance=widgets.FloatSlider(
-                 value=0.3,
+                 value=5.,
                  min=0,
                  max=10.0,
                  step=0.1,
@@ -254,7 +279,7 @@ def cellule_analyse_AgriPV_diffus():
                  readout_format='.1f',
              ),
              distance_plante=widgets.FloatSlider(
-                 value=10.,
+                 value=50.,
                  min=5.,
                  max=60.0,
                  step=5.,
@@ -284,8 +309,8 @@ def cellule_analyse_AgriPV_diffus():
 
     #############PARTIE POUR UNE DIRECTION DU SOLEIL############################
     
-def Run_AgriPV_direct(agripv = True, distance=30, distance_plante = 10, panelsize = 10, angle_panel = 40, height_panel = 0, flag_couvert = 'Luzerne', infini = True, hour = 12):
-    def Calcul_Caribu_direct(scene, dico_IDs):
+def Run_AgriPV_direct(agripv = True, distance=30, nb_plantes_caribu = 10, panelsize = 10, angle_panel = 40, height_panel = 0, flag_couvert = 'Luzerne', infini = True, hour = 12):
+    def Calcul_Caribu_direct(scene, pattern_caribu, infini, dico_IDs):
         # Creates sun
         energy = 1
         DOY = 175
@@ -352,7 +377,7 @@ def Run_AgriPV_direct(agripv = True, distance=30, distance_plante = 10, panelsiz
 
     scene_asso = s_luz + s_fet
     # Visualisation of the association
-    scene_out = Scene()
+    scene_out, scene_out_caribu = Scene(), Scene()
 
     #for shp in scene_asso:
     #    if shp.id <= 1000:  # Fetuque
@@ -363,7 +388,11 @@ def Run_AgriPV_direct(agripv = True, distance=30, distance_plante = 10, panelsiz
     #distance_plante = 10.
     initID = 1000
     distance = distance*100 #conversion en cm
-    nb_plantes = round(2.*distance/distance_plante)+1
+    #nb_plantes = round(2.*distance/distance_plante)+1
+    nb_plantes_caribu = 10
+    distance_plante = distance/nb_plantes_caribu
+    nb_plt_g = floor((nb_plantes_caribu-1)/2)
+    nb_plt_d = ceil((nb_plantes_caribu-1)/2)
     #informations panneaux
     #panelsize = 10
     #angle_panel = 0
@@ -387,58 +416,151 @@ def Run_AgriPV_direct(agripv = True, distance=30, distance_plante = 10, panelsiz
     dico_Ids = {}
     dico_pltes_Ids = {}
     no_plte_res = 1
-    for num_plante in range(0,nb_plantes):
+    
+    print('distance avant', distance, distance_plante, nb_plantes_caribu, nb_plt_g, nb_plt_d)
+    ########plangtes d'un cote des panneaux########################
+    #for num_plante in range(0,nb_plantes_caribu):
+    for num_plante in range(nb_plt_g):
         if (flag_couvert=='Luzerne'):
-            if ((-distance+num_plante*distance_plante>=-distance/2) and (-distance+num_plante*distance_plante<=distance/2)):
-                dico_Ids[num_plante*initID]=no_plte_res
+            #if ((-distance/2+num_plante*distance_plante>=-distance/2) and (-distance/2+num_plante*distance_plante<=distance/2)):
+            dico_Ids[num_plante*initID]=num_plante+1
             azimut_plante = random.random()*3.14
             for shp in s_luz:
-                if (distance/distance_plante%2==0):
-                    scene_out += Shape(Translated(0, -distance+num_plante*distance_plante, 0, AxisRotated((0,0,1), azimut_plante, shp.geometry)), shp.appearance, id=num_plante*initID)
-                else:
-                    scene_out += Shape(Translated(0, -distance+(num_plante+1/2)*distance_plante, 0, AxisRotated((0,0,1), azimut_plante, shp.geometry)), shp.appearance, id=num_plante*initID)
-
+                scene_out_caribu += Shape(Translated(0, -num_plante*distance_plante, 0, AxisRotated((0,0,1), azimut_plante, shp.geometry)), shp.appearance, id=num_plante*initID)
+                #if ((-distance/2+num_plante*distance_plante>=-distance/2) and (-distance/2+num_plante*distance_plante<=0)):
+                #    scene_out_caribu += Shape(Translated(0, -num_plante*distance_plante, 0, AxisRotated((0,0,1), azimut_plante, shp.geometry)), shp.appearance, id=num_plante*initID)
+                #elif ((-distance/2+num_plante*distance_plante>0) and (-distance/2+num_plante*distance_plante<=+distance/2)):
+                #    nb_plt_g +=1
+                #    scene_out_caribu += Shape(Translated(0, (nb_plantes_caribu-num_plante)*distance_plante, 0, AxisRotated((0,0,1), azimut_plante, shp.geometry)), shp.appearance, id=num_plante*initID)
+                    
+                #if (distance/distance_plante%2==0):
+                #    scene_out += Shape(Translated(0, -distance+num_plante*distance_plante, 0, AxisRotated((0,0,1), azimut_plante, shp.geometry)), shp.appearance, id=num_plante*initID)
+                #else:
+                #    scene_out += Shape(Translated(0, -distance+(num_plante+1/2)*distance_plante, 0, AxisRotated((0,0,1), azimut_plante, shp.geometry)), shp.appearance, id=num_plante*initID)
+                
         elif (flag_couvert=='Fétuque'):
-            if ((-distance+num_plante*distance_plante>=-distance/2) and (-distance+num_plante*distance_plante<=distance/2)):
-                dico_Ids[num_plante*initID]=no_plte_res
+            #if ((-distance/2+num_plante*distance_plante>=-distance/2) and (-distance+num_plante*distance_plante<=distance/2)):
+            dico_Ids[num_plante*initID]=num_plante+1
             azimut_plante = random.random()*3.14
             for shp in s_fet:
-                if (distance/distance_plante%2==0):
-                    scene_out += Shape(Translated(0, -distance+num_plante*distance_plante, 0, AxisRotated((0,0,1), azimut_plante, shp.geometry)), shp.appearance, id=num_plante*initID)
-                else:
-                    scene_out += Shape(Translated(0, -distance+(num_plante+1/2)*distance_plante, 0, AxisRotated((0,0,1), azimut_plante,shp.geometry)), shp.appearance, id=num_plante*initID)
+                if ((-distance/2+num_plante*distance_plante>=-distance/2) and (-distance/2+num_plante*distance_plante<=0)):
+                    scene_out_caribu += Shape(Translated(0, -num_plante*distance_plante, 0, AxisRotated((0,0,1), azimut_plante, shp.geometry)), shp.appearance, id=num_plante*initID)
+                elif ((-distance/2+num_plante*distance_plante>0) and (-distance/2+num_plante*distance_plante<=+distance/2)):
+                    scene_out_caribu += Shape(Translated(0, (nb_plantes_caribu-num_plante)*distance_plante, 0, AxisRotated((0,0,1), azimut_plante, shp.geometry)), shp.appearance, id=num_plante*initID)
+                    
+                #if (distance/distance_plante%2==0):
+                #    scene_out += Shape(Translated(0, -distance+num_plante*distance_plante, 0, AxisRotated((0,0,1), azimut_plante, shp.geometry)), shp.appearance, id=num_plante*initID)
+                #else:
+                #    scene_out += Shape(Translated(0, -distance+(num_plante+1/2)*distance_plante, 0, AxisRotated((0,0,1), azimut_plante,shp.geometry)), shp.appearance, id=num_plante*initID)
     
         elif (flag_couvert=='Vigne'):
-            if ((-distance+num_plante*distance_plante>=-distance/2) and (-distance+num_plante*distance_plante<=distance/2)):
-                dico_Ids[num_plante*initID]=no_plte_res
+            #if ((-distance+num_plante*distance_plante>=-distance/2) and (-distance+num_plante*distance_plante<=distance/2)):
+            dico_Ids[num_plante*initID]=num_plante+1
             for shp in s_vig:
-                if (distance/distance_plante%2==0):
-                    scene_out += Shape(Translated(0, -distance+num_plante*distance_plante, 0, shp.geometry), shp.appearance, id=num_plante*initID)
-                else:
-                    scene_out += Shape(Translated(0, -distance+(num_plante+1/2)*distance_plante, 0, shp.geometry), shp.appearance, id=num_plante*initID)
+                if ((-distance/2+num_plante*distance_plante>=-distance/2) and (-distance/2+num_plante*distance_plante<=0)):
+                    scene_out_caribu += Shape(Translated(0, -num_plante*distance_plante, 0, AxisRotated((0,0,1), azimut_plante, shp.geometry)), shp.appearance, id=num_plante*initID)
+                elif ((-distance/2+num_plante*distance_plante>0) and (-distance/2+num_plante*distance_plante<=+distance/2)):
+                    scene_out_caribu += Shape(Translated(0, (nb_plantes_caribu-num_plante)*distance_plante, 0, AxisRotated((0,0,1), azimut_plante, shp.geometry)), shp.appearance, id=num_plante*initID)
+                    
+                #if (distance/distance_plante%2==0):
+                #    scene_out += Shape(Translated(0, -distance+num_plante*distance_plante, 0, shp.geometry), shp.appearance, id=num_plante*initID)
+                #else:
+                #    scene_out += Shape(Translated(0, -distance+(num_plante+1/2)*distance_plante, 0, shp.geometry), shp.appearance, id=num_plante*initID)
     
         
         else:
-            if ((-distance+num_plante*distance_plante>=-distance/2) and (-distance+num_plante*distance_plante<=distance/2)):
-                dico_Ids[num_plante*initID]=no_plte_res
-            scene_out += Shape(Translated(0, -distance+num_plante*distance_plante, 0, sensor), id=num_plante*initID)
-        dico_pltes_Ids[flag_couvert] = dico_Ids
+            #if ((-distance+num_plante*distance_plante>=-distance/2) and (-distance+num_plante*distance_plante<=distance/2)):
+            dico_Ids[num_plante*initID]=num_plante+1
+            if ((-distance/2+num_plante*distance_plante>=-distance/2) and (-distance/2+num_plante*distance_plante<=0)):
+                scene_out_caribu += Shape(Translated(0, -num_plante*distance_plante, 0, AxisRotated((0,0,1), 0, sensor)), shp.appearance, id=num_plante*initID)
+            elif ((-distance/2+num_plante*distance_plante>0) and (-distance/2+num_plante*distance_plante<=+distance/2)):
+                scene_out_caribu += Shape(Translated(0, (nb_plantes_caribu-num_plante)*distance_plante, 0, AxisRotated((0,0,1), 0, sensor)), shp.appearance, id=num_plante*initID)
+                
+            #scene_out += Shape(Translated(0, -distance+num_plante*distance_plante, 0, sensor), id=num_plante*initID)
         no_plte_res += 1
+
+    ########plantes de l'autre cote des panneaux########################
+    #for num_plante in range(0,nb_plantes_caribu):
+    for num_plante in range(nb_plt_d):
+        if (flag_couvert=='Luzerne'):
+            #if ((-distance/2+num_plante*distance_plante>=-distance/2) and (-distance/2+num_plante*distance_plante<=distance/2)):
+            dico_Ids[num_plante*initID]=num_plante+1
+            azimut_plante = random.random()*3.14
+            for shp in s_luz:
+                scene_out_caribu += Shape(Translated(0, num_plante*distance_plante, 0, AxisRotated((0,0,1), azimut_plante, shp.geometry)), shp.appearance, id=num_plante*initID)
+                #if ((-distance/2+num_plante*distance_plante>=-distance/2) and (-distance/2+num_plante*distance_plante<=0)):
+                #    scene_out_caribu += Shape(Translated(0, -num_plante*distance_plante, 0, AxisRotated((0,0,1), azimut_plante, shp.geometry)), shp.appearance, id=num_plante*initID)
+                #elif ((-distance/2+num_plante*distance_plante>0) and (-distance/2+num_plante*distance_plante<=+distance/2)):
+                #    nb_plt_g +=1
+                #    scene_out_caribu += Shape(Translated(0, (nb_plantes_caribu-num_plante)*distance_plante, 0, AxisRotated((0,0,1), azimut_plante, shp.geometry)), shp.appearance, id=num_plante*initID)
+                    
+                #if (distance/distance_plante%2==0):
+                #    scene_out += Shape(Translated(0, -distance+num_plante*distance_plante, 0, AxisRotated((0,0,1), azimut_plante, shp.geometry)), shp.appearance, id=num_plante*initID)
+                #else:
+                #    scene_out += Shape(Translated(0, -distance+(num_plante+1/2)*distance_plante, 0, AxisRotated((0,0,1), azimut_plante, shp.geometry)), shp.appearance, id=num_plante*initID)
+                
+        elif (flag_couvert=='Fétuque'):
+            #if ((-distance/2+num_plante*distance_plante>=-distance/2) and (-distance+num_plante*distance_plante<=distance/2)):
+            dico_Ids[num_plante*initID]=num_plante+1
+            azimut_plante = random.random()*3.14
+            for shp in s_fet:
+                if ((-distance/2+num_plante*distance_plante>=-distance/2) and (-distance/2+num_plante*distance_plante<=0)):
+                    scene_out_caribu += Shape(Translated(0, -num_plante*distance_plante, 0, AxisRotated((0,0,1), azimut_plante, shp.geometry)), shp.appearance, id=num_plante*initID)
+                elif ((-distance/2+num_plante*distance_plante>0) and (-distance/2+num_plante*distance_plante<=+distance/2)):
+                    scene_out_caribu += Shape(Translated(0, (nb_plantes_caribu-num_plante)*distance_plante, 0, AxisRotated((0,0,1), azimut_plante, shp.geometry)), shp.appearance, id=num_plante*initID)
+                    
+                #if (distance/distance_plante%2==0):
+                #    scene_out += Shape(Translated(0, -distance+num_plante*distance_plante, 0, AxisRotated((0,0,1), azimut_plante, shp.geometry)), shp.appearance, id=num_plante*initID)
+                #else:
+                #    scene_out += Shape(Translated(0, -distance+(num_plante+1/2)*distance_plante, 0, AxisRotated((0,0,1), azimut_plante,shp.geometry)), shp.appearance, id=num_plante*initID)
+    
+        elif (flag_couvert=='Vigne'):
+            #if ((-distance+num_plante*distance_plante>=-distance/2) and (-distance+num_plante*distance_plante<=distance/2)):
+            dico_Ids[num_plante*initID]=num_plante+1
+            for shp in s_vig:
+                if ((-distance/2+num_plante*distance_plante>=-distance/2) and (-distance/2+num_plante*distance_plante<=0)):
+                    scene_out_caribu += Shape(Translated(0, -num_plante*distance_plante, 0, AxisRotated((0,0,1), azimut_plante, shp.geometry)), shp.appearance, id=num_plante*initID)
+                elif ((-distance/2+num_plante*distance_plante>0) and (-distance/2+num_plante*distance_plante<=+distance/2)):
+                    scene_out_caribu += Shape(Translated(0, (nb_plantes_caribu-num_plante)*distance_plante, 0, AxisRotated((0,0,1), azimut_plante, shp.geometry)), shp.appearance, id=num_plante*initID)
+                    
+                #if (distance/distance_plante%2==0):
+                #    scene_out += Shape(Translated(0, -distance+num_plante*distance_plante, 0, shp.geometry), shp.appearance, id=num_plante*initID)
+                #else:
+                #    scene_out += Shape(Translated(0, -distance+(num_plante+1/2)*distance_plante, 0, shp.geometry), shp.appearance, id=num_plante*initID)
+    
+        
+        else:
+            #if ((-distance+num_plante*distance_plante>=-distance/2) and (-distance+num_plante*distance_plante<=distance/2)):
+            dico_Ids[num_plante*initID]=num_plante+1
+            if ((-distance/2+num_plante*distance_plante>=-distance/2) and (-distance/2+num_plante*distance_plante<=0)):
+                scene_out_caribu += Shape(Translated(0, -num_plante*distance_plante, 0, AxisRotated((0,0,1), 0, sensor)), shp.appearance, id=num_plante*initID)
+            elif ((-distance/2+num_plante*distance_plante>0) and (-distance/2+num_plante*distance_plante<=+distance/2)):
+                scene_out_caribu += Shape(Translated(0, (nb_plantes_caribu-num_plante)*distance_plante, 0, AxisRotated((0,0,1), 0, sensor)), shp.appearance, id=num_plante*initID)
+                
+            #scene_out += Shape(Translated(0, -distance+num_plante*distance_plante, 0, sensor), id=num_plante*initID)
+        no_plte_res += 1
+    dico_pltes_Ids[flag_couvert] = dico_Ids
+        
+    print('distance apres', distance)
+    distance = (nb_plt_g + nb_plt_d - 1)*distance_plante
     ###########RAJOUT des panneaux################
     #print(len(scene_out))
     if (agripv == True):
-        if (distance/distance_plante%2==0):
-            scene_out += Shape(Translated(0, -distance/2, height_panel, AxisRotated((1,0,0), angle_panel*3.14/180,panel)))
-            scene_out += Shape(Translated(0, +distance/2, height_panel, AxisRotated((1,0,0), angle_panel*3.14/180,panel)))
-        else:
-            scene_out += Shape(Translated(0, (-distance+distance_plante)/2, height_panel, AxisRotated((1,0,0), angle_panel*3.14/180,panel)))
-            scene_out += Shape(Translated(0, (+distance/2+distance_plante)/2, height_panel, AxisRotated((1,0,0), angle_panel*3.14/180,panel)))
+        scene_out_caribu += Shape(Translated(0, 0, height_panel, AxisRotated((1,0,0), angle_panel*3.14/180,panel)))
+        #scene_out_caribu += Shape(Translated(0, distance/2, height_panel, AxisRotated((1,0,0), angle_panel*3.14/180,panel)))
+        #if (distance/distance_plante%2==0):
+        #    scene_out += Shape(Translated(0, -distance/2, height_panel, AxisRotated((1,0,0), angle_panel*3.14/180,panel)))
+        #    scene_out += Shape(Translated(0, +distance/2, height_panel, AxisRotated((1,0,0), angle_panel*3.14/180,panel)))
+        #else:
+        #    scene_out += Shape(Translated(0, (-distance+distance_plante)/2, height_panel, AxisRotated((1,0,0), angle_panel*3.14/180,panel)))
+        #    scene_out += Shape(Translated(0, (+distance/2+distance_plante)/2, height_panel, AxisRotated((1,0,0), angle_panel*3.14/180,panel)))
                 
             #for shp in s_fet:
             #    scene_out += Shape(Translated(-distance/2, 0, 0, shp.geometry), shp.appearance, id=shp.id)
             #    scene_out += Shape(Translated(+distance/2, 0, 0, shp.geometry), shp.appearance, id=shp.id)
-    colored_scene = Calcul_Caribu_direct(scene_out, dico_pltes_Ids)
-    print(len(dico_pltes_Ids[flag_couvert]))
+    pattern_caribu = (-(distance-(nb_plantes_caribu-1)*distance_plante)/2,-distance_plante/2,(distance-(nb_plantes_caribu-1)*distance_plante)/2,distance_plante/2)
+    colored_scene = Calcul_Caribu_direct(scene_out_caribu, pattern_caribu, infini, dico_pltes_Ids)
+    print(len(dico_pltes_Ids[flag_couvert]),pattern_caribu)
     return SceneWidget(colored_scene, size_world=75)
 
 
