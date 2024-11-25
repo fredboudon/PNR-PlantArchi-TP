@@ -82,11 +82,11 @@ Axiom:
     plantdist = 150
     for i in range(3):
       for j in range(3):
-        nproduce [  Plant(i*3+j) @M(-rowsize+rowsize*i,-plantdist+plantdist*j,0) _(wsouche) @Gc SetGuide(souche,lsouche, True) A(0)]
+        nproduce [  Plant(i*3+j) /(90) @M(-rowsize+rowsize*i,-plantdist+plantdist*j,0) _(wsouche) @Gc SetGuide(souche,lsouche, True) A(0)]
         if AGRIVOLTAISM:
             nproduce [ @M(-rowsize+rowsize*i,-plantdist+plantdist*j,panel_height) ?Light(0) Panel(panel_angle, panel_width, panel_length)]
   else:
-    nproduce [ _(wsouche) @Gc SetGuide(souche,lsouche, True) A(0)]
+    nproduce [ _(wsouche) /(90) @Gc SetGuide(souche,lsouche, True) A(0)]
     if AGRIVOLTAISM:
       nproduce [ @M(0,0,panel_height) ?Light(0) Panel(panel_angle, panel_width, panel_length)]
 
@@ -140,16 +140,14 @@ B(l): # souches horizontales
 
 interpretation:
 
-?Light(lg) Leaf(size) :
+Leaf(size) :
   #print(lg, minl, maxl)
   s = sqrt(size/leafsmb_surf)
   if size > 0:
     nproduce [ ,(2)
-    #lightintensity(lg, 2)
     produce @Ge Elasticity(0) _(0.005) F(s) { .+(160) f(s). -(90) f(1.6*s). -(120) f(0.75*s). +(90) f(s). -(50) f(0.75*s). -(120) f(1.2*s). +(160) f(s). -(90) f(1.6*s). -(60) f(1.6*s). -(90) f(s) . +(160) f(1.2*s) . -(120) f(0.75*s) . -(50) f(s). +(90) f(0.75*s). -(120) f(1.6*s). -(90) f(s).}(True) ]
 
-?Light(lg) Panel(angle, width, length) :
-  lightintensity(lg, 0)
+Panel(angle, width, length) :
   nproduce _(length/2) [&(90-angle)   Quad(width/2)] [/(180)&(90+angle)  Quad(width/2)]
 
 endlsystem
