@@ -83,7 +83,7 @@ def Light_model(lsys, hour=12):
     return SceneWidget(colored_scene, size_world=75)
 
 
-def Run_AgriPV(agripv = True, interpanel=3, nb_plantes_caribu = 5, panelsize = 10, angle_panel = 0, height_panel = 100, flag_couvert = 'Luzerne',  sky = True, sun = True, hour = 12,infini = True):    
+def Run_AgriPV(agripv = True, interpanel=400, nb_plantes_caribu = 5, panelsize = 50, angle_panel = 0, height_panel = 100, flag_couvert = 'Luzerne',  sky = True, sun = True, hour = 12,infini = True):    
     def Calcul_Caribu(scene, pattern_caribu, infini, dico_IDs, sky=sky, sun=sun, hour=hour,height_panel=height_panel):
         # ciel
         lights = []
@@ -166,7 +166,7 @@ def Run_AgriPV(agripv = True, interpanel=3, nb_plantes_caribu = 5, panelsize = 1
 
     #distance_plante = 10.
     initID = 1000
-    distance = interpanel*100 #conversion en cm
+    distance = interpanel#*100 #conversion en cm
     #nb_plantes = round(2.*distance/distance_plante)+1
     distance_plante = distance/nb_plantes_caribu
     nb_plt_g = floor((nb_plantes_caribu-1)/2)
@@ -327,10 +327,10 @@ def cellule_analyse_AgriPV():
                  indent=False
     ),             
              interpanel=widgets.FloatSlider(
-                 value=0.,
-                 min=1,
-                 max=10,
-                 step=5,
+                 value=400.,
+                 min=100,
+                 max=1000,
+                 step=10,
                  description='InterPanel',
                  disabled=False,
                  continuous_update=False,
