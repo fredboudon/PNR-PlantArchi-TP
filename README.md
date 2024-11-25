@@ -39,7 +39,5 @@ Test your installation by running
 
 ## Online access to the exercices
 
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/fredboudon/lpy-training.git/imagina2021?filepath=examples)
-[![NBViewer](https://img.shields.io/badge/render-nbviewer-orange.svg)](https://nbviewer.jupyter.org/github/fredboudon/lpy-training/blob/imagina2021/examples/L-systems-Topo-Turtle.ipynb)
-[![NBViewer](https://img.shields.io/badge/render-nbviewer-orange.svg)](https://nbviewer.jupyter.org/github/fredboudon/lpy-training/blob/imagina2021/examples/L-systems-Rewritting.ipynb)
-[![NBViewer](https://img.shields.io/badge/render-nbviewer-orange.svg)](https://nbviewer.jupyter.org/github/fredboudon/lpy-training/blob/imagina2021/examples/Lsystems-InformationTransfert.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)]([![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/fredboudon/PNR-PlantArchi-TP/HEAD?labpath=Exercises%2FModelisation+ecophysiologique+de+la+plante+dans+le+peuplement.ipynb))
+[![NBViewer](https://img.shields.io/badge/render-nbviewer-orange.svg)](https://nbviewer.org/github/fredboudon/PNR-PlantArchi-TP/blob/main/Exercises/Modelisation%20ecophysiologique%20de%20la%20plante%20dans%20le%20peuplement.ipynb)
