@@ -83,8 +83,8 @@ def Light_model(lsys, hour=12):
     return SceneWidget(colored_scene, size_world=75)
 
 
-def Run_AgriPV_diffus(agripv = True, interpanel=3, nb_plantes_caribu = 5, panelsize = 10, angle_panel = 0, height_panel = 100, flag_couvert = 'Luzerne',  sky = True, sun = True, hour = 12,infini = True):    
-    def Calcul_Caribu_diffus(scene, pattern_caribu, infini, dico_IDs, sky=sky, sun=sun, hour=hour):
+def Run_AgriPV(agripv = True, interpanel=3, nb_plantes_caribu = 5, panelsize = 10, angle_panel = 0, height_panel = 100, flag_couvert = 'Luzerne',  sky = True, sun = True, hour = 12,infini = True):    
+    def Calcul_Caribu(scene, pattern_caribu, infini, dico_IDs, sky=sky, sun=sun, hour=hour,height_panel=height_panel):
         # ciel
         lights = []
         if sky:
@@ -108,12 +108,6 @@ def Run_AgriPV_diffus(agripv = True, interpanel=3, nb_plantes_caribu = 5, panels
             sun = tuple((float(getsun[0]), tuple((float(getsun[1]), float(getsun[2]), float(getsun[3])))))
             lights.append(sun)
             # print (sun_position)
-            sunid = 1000000
-            sun_shp = Shape(Translated(sun[1][0] * -50, sun[1][1] * -50, sun[1][2] * -50, Sphere(0.5)), Material(Color3(60, 60, 15)), id=sunid)
-            if scene[-1].id != sunid:
-                scene.add(sun_shp)
-            else:
-                scene[-1] = sun_shp
 
         c_scene = CaribuScene(scene=scene, light=lights, pattern=pattern_caribu)
         raw, aggregated = c_scene.run(direct=True, infinite=infini)
@@ -125,6 +119,14 @@ def Run_AgriPV_diffus(agripv = True, interpanel=3, nb_plantes_caribu = 5, panels
         colored_scene = Scene()
         for shp in viewmaponcan:
             colored_scene.add(reformat_scene(shp.geometry))
+            if sun:
+                sunid = 1000000
+                sun_shp = Shape(Translated(sun[1][0] * -height_panel*1.5, sun[1][1] * -height_panel*1.5, sun[1][2] * -height_panel*1.5, Sphere(5)), Material(Color3(60, 60, 15)), id=sunid)
+                if colored_scene[-1].id != sunid:
+                    colored_scene.add(sun_shp)
+                else:
+                    colored_scene[-1] = sun_shp
+
 
         # Graph
         graph = {}
@@ -304,7 +306,7 @@ def Run_AgriPV_diffus(agripv = True, interpanel=3, nb_plantes_caribu = 5, panels
 
     pattern_caribu = (-distance_plante/2,-(nb_plt_g+0.5)*distance_plante,distance_plante/2,(nb_plt_d+0.5)*distance_plante)
     if sun or sky:
-        colored_scene = Calcul_Caribu_diffus(scene_out_caribu, pattern_caribu, infini, dico_pltes_Ids)
+        colored_scene = Calcul_Caribu(scene_out_caribu, pattern_caribu, infini, dico_pltes_Ids)
     else:
         colored_scene = scene_out_caribu
     xmin, ymin, xmax, ymax = pattern_caribu
@@ -312,12 +314,12 @@ def Run_AgriPV_diffus(agripv = True, interpanel=3, nb_plantes_caribu = 5, panels
     scene_limit = QuadSet([(xmin,ymin,h),(xmin,ymax,h),(xmax,ymax,h),(xmax,ymin,h)],[range(4)])
     colored_scene.add(Shape(scene_limit, Material(Color3(0,0,0)), id=100000000))
     #print(len(dico_pltes_Ids[flag_couvert]),pattern_caribu)
-    sc = SceneWidget(colored_scene, size_world=75)
+    sc = SceneWidget(colored_scene, size_world=max(100,height_panel*1.5))
     sc.plane = False
     return sc
 
-def cellule_analyse_AgriPV_diffus():
-    interact(Run_AgriPV_diffus,
+def cellule_analyse_AgriPV():
+    interact(Run_AgriPV,
              agripv = widgets.Checkbox(
                  value=True,
                  description='AgriPV',
